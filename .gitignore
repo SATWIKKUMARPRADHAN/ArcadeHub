@@ -1,0 +1,28 @@
+# Node.js dependencies
+**/node_modules/
+**/npm-debug.log
+**/yarn.lock
+**/package-lock.json
+
+# Build artefacts
+client/dist/
+client/build/
+server/dist/
+server/build/
+
+# Environment files – never commit credentials
+.env
+.server/.env
+*.env.*
+
+# Docker artefacts
+docker-compose.override.yml
+Dockerfile*
+.dockerignore
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

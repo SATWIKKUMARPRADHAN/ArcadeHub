@@ -14,15 +14,19 @@ jobs:
       run:
         working-directory: ./client
 
+    strategy:
+      matrix:
+        node-version: [20.x]
+
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: client/package-lock.json
+          cache-dependency-path: ./client/package-lock.json
 
       - name: Install dependencies
         run: npm install
@@ -37,15 +41,19 @@ jobs:
       run:
         working-directory: ./server
 
+    strategy:
+      matrix:
+        node-version: [20.x]
+
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: ./server/package-lock.json
 
       - name: Install dependencies
         run: npm install

@@ -1,6 +1,8 @@
 version: '3.8'
 
 services:
+  # ==================== EXISTING APPLICATION SERVICES ====================
+
   backend:
     build: ./server
     ports:
@@ -9,6 +11,10 @@ services:
       - PORT=5000
       - MONGO_URI=${MONGO_URI}
     restart: unless-stopped
+    # Labels for better container identification in monitoring
+    labels:
+      monitoring: "true"
+      service: "backend"
 
   frontend:
     build: ./client
@@ -19,3 +25,107 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    labels:
+      monitoring: "true"
+      service: "frontend"
+
+  # ==================== MONITORING STACK ====================
+
+  # cAdvisor: Collects Docker container metrics
+  # Provides CPU, memory, network, and storage statistics for all running containers
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    # Mount Docker socket to collect container metrics
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Cache volume for performance
+      - cadvisor-cache:/var/lib/cadvisor
+    restart: unless-stopped
+    # Prevent monitoring from affecting the application
+    labels:
+      monitoring: "infrastructure"
+    # Resource limits for cAdvisor itself
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # Prometheus: Scrapes and stores metrics from cAdvisor
+  # Provides metrics API for visualization and querying
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      # Mount the Prometheus configuration file
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # Persistent storage for metrics time-series database
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      # Keep 15 days of metrics
+      - '--storage.tsdb.retention.time=15d'
+    restart: unless-stopped
+    depends_on:
+      - cadvisor
+    labels:
+      monitoring: "infrastructure"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Grafana: Visualizes metrics with dashboards
+  # Provides a web UI for monitoring and alerting
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      # Set admin credentials (change in production)
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=#SKP&2954
+      # Allow unsigned plugins
+      #- GF_INSTALL_PLUGINS=grafana-piechart-panel
+      # Set organization settings
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      # Mount provisioning files for automatic datasource configuration
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      # Persistent storage for dashboards and settings
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    labels:
+      monitoring: "infrastructure"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+# ==================== VOLUMES ====================
+# Persistent storage for time-series data and Grafana configuration
+
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  cadvisor-cache:
+    driver: local

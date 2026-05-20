@@ -1,0 +1,33 @@
+# Prometheus Configuration for ArcadeHub Monitoring
+# This configuration enables monitoring of Docker containers, memory, CPU, and network metrics
+# via cAdvisor integration
+
+global:
+  # How often Prometheus scrapes targets for metrics
+  scrape_interval: 15s
+  
+  # How long until a scrape request times out
+  scrape_timeout: 10s
+  
+  # Attach these labels to all timeseries collected
+  #external_labels:
+   # monitor: 'arcadehub-monitor'
+    #environment: 'docker-compose'
+
+# Scrape Prometheus itself for internal metrics
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # cAdvisor - Docker container metrics
+  # Collects CPU, memory, network, storage metrics for all containers
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metrics_path: '/metrics'
+    # Relabel to extract container names from metric labels
+    #relabel_configs:
+     # - source_labels: [__meta_cadvisor_container_name]
+      #  target_label: container_name

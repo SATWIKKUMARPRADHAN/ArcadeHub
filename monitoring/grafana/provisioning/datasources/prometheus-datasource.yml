@@ -1,0 +1,15 @@
+# Grafana Datasource Provisioning Configuration
+# This file automatically configures Prometheus as a datasource on Grafana startup
+
+apiVersion: 1
+
+datasources:
+  # Prometheus datasource for container metrics
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s

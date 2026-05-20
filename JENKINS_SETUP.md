@@ -35,10 +35,12 @@ A custom Jenkins image is built from `jenkins/Dockerfile` and includes:
 From the project root, run:
 
 ```bash
-docker-compose up -d jenkins
+docker-compose up -d --build jenkins
 ```
 
-This starts Jenkins without affecting the existing frontend, backend, or monitoring services.
+This builds the Jenkins image after the Docker socket permission fix and starts Jenkins without affecting the existing frontend, backend, or monitoring services.
+
+> Note: Jenkins now runs with Docker socket access fixed inside the custom Jenkins image. The `jenkins` user is added to both the `docker` and `root` groups so pipeline Docker commands can reach `/var/run/docker.sock` safely.
 
 ## Accessing Jenkins UI
 
